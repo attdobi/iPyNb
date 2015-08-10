@@ -1,0 +1,14 @@
+{
+ "display_name": "pyrootnb",
+ "language": "python",
+ "argv": [
+  "//anaconda/bin/python",
+  "-m",
+  "IPython.kernel",
+  "-f",
+  "{connection_file}"
+ ],
+ "env": {
+    "LD_LIBRARY_PATH": "/global/project/projectdirs/lux/Tools/root_pdsf/root/lib/"
+ }
+}
