@@ -47,7 +47,7 @@ def default_canvas(name="icanvas", size=(800, 600)):
     return canvas(name=name, size=size)
 
 
-def show(canvas,size=(800,600)):
+def rtshow(canvas,size=(800,600)):
     #file = tempfile.NamedTemporaryFile(suffix=".png")
     #canvas.SaveAs(file.name)
     #ip_img = display.Image(filename=file.name, format='png', embed=True)
