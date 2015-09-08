@@ -11,13 +11,20 @@ import scipy.io as sio
 from scipy.optimize import curve_fit # for fitting
 import pandas as pd
 
+import sys
+sys.path.insert(2,'/global/project/projectdirs/lux/Tools/anaconda/lib/python2.7/site-packages')
+sys.path.insert(2, '/global/project/projectdirs/lux/Tools/anaconda/lib/python2.7/site-packages/seaborn-0.6.0-py2.7.egg-info')
+import seaborn as sns
+
 from bokeh.plotting import figure, output_file, show, VBox, ColumnDataSource, output_server, cursession, curdoc, output_notebook
 from bokeh.models.widgets import Slider, TextInput, HBox, VBox, Dialog, Button, VBoxForm, MultiSelect, PreText, Select
-from bokeh.models import Range1d, HoverTool, BoxSelectTool, Callback, Circle, ColumnDataSource, Slider, CheckboxButtonGroup, Rect
+from bokeh.models import Range1d, HoverTool, BoxSelectTool
 from bokeh.server.utils.plugins import object_page
+from IPython.html.widgets import interact
 from bokeh.io import vform, hplot
 from bokeh.charts import Histogram, Bar
-from IPython.html.widgets import interact
+from bokeh.models import Callback, Circle, ColumnDataSource, Slider, CheckboxButtonGroup, Rect
+
 
 #define function to convert matfile into dataframe (panda)
 def df_from_mat(mat_data):
@@ -30,7 +37,3 @@ def df_from_mat(mat_data):
             keys.append(key)
     keys=array(keys)
     return pd.DataFrame(vstack(a[:]).T,columns=keys)
-
-
-sys.path.insert(2, '/global/project/projectdirs/lux/Tools/anaconda/lib/python2.7/site-packages/seaborn-0.6.0-py2.7.egg-info')
-import seaborn as sns

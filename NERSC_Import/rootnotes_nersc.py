@@ -53,7 +53,10 @@ def rtshow(canvas,size=(800,600)):
     #file = tempfile.NamedTemporaryFile(suffix=".png")
     #canvas.SaveAs(file.name)
     #ip_img = display.Image(filename=file.name, format='png', embed=True)
-    #return ip_img._repr_png_()    
+    #return ip_img._repr_png_()   
+    #remove old temp files first
+    clearCanvas()
+    
     file = tempfile.NamedTemporaryFile(suffix=".pdf",dir='./tmpNB',delete=0)
     canvas.SaveAs(file.name)
     path=os.path.abspath('.')

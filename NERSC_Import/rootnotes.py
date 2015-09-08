@@ -23,6 +23,7 @@ import ROOT
 ROOT.gROOT.SetBatch()
 
 import tempfile
+import os
 from IPython.core import display
 
 
@@ -44,9 +45,13 @@ def default_canvas(name="icanvas", size=(800, 600)):
 
 
 def _display_canvas(canvas):
-    file = tempfile.NamedTemporaryFile(suffix=".png")
+    file = tempfile.NamedTemporaryFile(suffix=".pdf")#png
     canvas.SaveAs(file.name)
-    ip_img = display.Image(filename=file.name, format='png', embed=True)
+    bash_com='pdftoppm -cropbox -r {:.0f} -png  {:s} >  temp.png'.format(canvas.GetWindowWidth()*72/800,file.name)
+    os.system(bash_com)
+    #ip_img = display.Image(filename=file.name, format='png', embed=True)
+    ip_img = display.Image(filename='temp.png', format='png', embed=True)
+    os.system('rm temp.png')
     return ip_img._repr_png_()
 
 
