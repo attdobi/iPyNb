@@ -2,7 +2,7 @@ from __future__ import division
 import pylab
 import scipy.interpolate as ip
 import sys
-#sys.path.insert(2, '//global/project/projectdirs/lux/data') #frozen with NEST v98\n",
+sys.path.insert(2, '//global/project/projectdirs/lux/data') #frozen with NEST v98\n",
 from aLib import pyNEST as pn
 from aLib import inrange, eff, rates
 import matplotlib as mpl
