@@ -89,7 +89,7 @@ def WIMP2NphNe(mWmp=50,nSim=1e5, kg_days=5600*1000, f_drift=700,g1=0.075,SPE_res
     WmpRate = float((dR_vect.sum() * np.diff(Er_vect[:2])) / (1e-9)) #evts/kg/day per 1 pb, 100% acceptance
     LZ_exposure_factor=nSim/(WmpRate*5600*1000)
     print('total rate above {:.2f} keV = {:g} [evts/kg/day per pb]'.format(Er_min, WmpRate)) #evts/kg/day/pb
-    print('LZ exposure factor per pb = {:.g}'.format(LZ_exposure_factor)) #evts/kg/day
+    print('LZ exposure factor per pb = {:g}'.format(LZ_exposure_factor)) #evts/kg/day
 
     plt.figure()
     plt.loglog(Er_vect,dR_vect*1000*365,'-k')
