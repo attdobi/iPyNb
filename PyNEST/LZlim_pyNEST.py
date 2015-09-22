@@ -22,11 +22,14 @@ def scatterColor(x,y,a=0.8):
     return
 
 '''Define function dRdE>quanta->signal, for LZ'''
-def dN2NphNe(ParticleType='ER',file_path='data/PP_7Be_evt_ton_year_keV_lin_noDiscrim.txt', nSim=1e5, kg_days=5600*1000, f_drift=700,g1=0.075,SPE_res= 0.5, minSpikePE=0.25, eff_extract=0.95,SE_size=50,SE_res=sqrt(50),e_lifetime=1000, dt0=500):
+def dN2NphNe(ParticleType='ER',file_path='data/PP_7Be_evt_ton_year_keV_lin_noDiscrim.txt', nSim=1e5, kg_days=5600*1000, f_drift=700,g1=0.075,SPE_res= 0.5, minSpikePE=0.25, eff_extract=0.95,SE_size=50,SE_res=sqrt(50),e_lifetime=1000, dt0=500,
+Esim_max=200):
     '''input: ParticleType('ER' or 'NR'), file path to diff spectrum, total rate in evts/kg/day, drift field V/cm, g1, SPE_res, electron extraction efficiency, SE size, sigSE, electron lifetime, center of detector)'''
     #nSim=ceil(total_rate*5600*1000)# use total_rate= Calc_Rate_evts_kg_day to Simulate 1 nominal LZ exposure
     Edatatxt, rate=np.loadtxt(file_path,skiprows=0,unpack=True) #evts/ton/year #Energy scale must be linear in text file for code to work properly!
-    Edata=np.arange(min(Edatatxt),max(Edatatxt),0.001)#0.01 keV binning
+    if (max(Edatatxt) < Esim_max):
+        Esim_max=max(Edatatxt)
+    Edata=np.arange(min(Edatatxt),Esim_max,0.001)#0.01 keV binning
     dR = rate/1000/365 #convert from Ton to kg and year to days 
     dR=np.interp(Edata,Edatatxt,dR)
     Rcum = dR.cumsum()/dR.sum()  # Energy cumulative distribution function
@@ -47,12 +50,12 @@ def dN2NphNe(ParticleType='ER',file_path='data/PP_7Be_evt_ton_year_keV_lin_noDis
 
     Eee_min = min(Edata) #for integral
     Eee_max = max(Edata) #for integral
-    Eee_vect = np.linspace(Eee_min,Eee_max*1.01,2e6)
+    Eee_vect = np.linspace(Eee_min,Eee_max*1.001,2e6)
     dR_vect = np.interp(Eee_vect[Eee_vect>=0.1],Edata[Edata>=0.1],dR[Edata>=0.1]) # Start integrating at 0.1 keV
     Rate_evts_kg_day = float(dR_vect.sum() * np.diff(Eee_vect[:2])) #evts/kg/day 100% acceptance
     LZ_exposure_factor=nSim/(Rate_evts_kg_day*5600*1000)
-    print('total rate above {:.2f} keV = {:g} [evts/kg/day]'.format(Eee_min, Rate_evts_kg_day)) #evts/kg/day
-    print('LZ exposure factor = {:.1f}'.format(LZ_exposure_factor)) #evts/kg/day
+    print('total between {:.2f} and {:.2f} keV = {:g} [evts/kg/day]'.format(Eee_min, Eee_max, Rate_evts_kg_day)) #evts/kg/day
+    print('LZ exposure factor = {:g}'.format(LZ_exposure_factor)) #evts/kg/day
 
     plt.figure()
     plt.loglog(Edata,dR*1000*365,'-k')
