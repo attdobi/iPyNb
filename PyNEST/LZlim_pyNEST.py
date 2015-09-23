@@ -22,7 +22,7 @@ def scatterColor(x,y,a=0.8):
     return
 
 '''Define function dRdE>quanta->signal, for LZ'''
-def dN2NphNe(ParticleType='ER',file_path='data/PP_7Be_evt_ton_year_keV_lin_noDiscrim.txt', nSim=1e5, kg_days=5600*1000, f_drift=700,g1=0.075,SPE_res= 0.5, minSpikePE=0.25, eff_extract=0.95,SE_size=50,SE_res=sqrt(50),e_lifetime=1000, dt0=500,
+def dN2NphNe(ParticleType='ER',file_path='data/PP_7Be_evt_ton_year_keV_lin_noDiscrim.txt', nSim=1e5, kg_days=5600*1000, f_drift=700,g1=0.075,SPE_res= 0.5, minSpikePE=0.25, eff_extract=0.95,SE_size=50,SE_res=10,e_lifetime=1000, dt0=500,
 Esim_max=200):
     '''input: ParticleType('ER' or 'NR'), file path to diff spectrum, total rate in evts/kg/day, drift field V/cm, g1, SPE_res, electron extraction efficiency, SE size, sigSE, electron lifetime, center of detector)'''
     #nSim=ceil(total_rate*5600*1000)# use total_rate= Calc_Rate_evts_kg_day to Simulate 1 nominal LZ exposure
@@ -45,8 +45,8 @@ Esim_max=200):
     NS1_coin=st.binom.rvs(S1_spike,1-math.erfc(((1-minSpikePE)/SPE_res)/sqrt(2))/2) #takes at least minSpikePE to produce a spike, use binomial probability calculated from erfc
     S1 = st.norm.rvs(S1_spike,sqrt(S1_spike)*SPE_res,size=size(S1_spike)) #single PE resolution with sigma=sqrt(N)*sig_PE
     Ne_ext = st.binom.rvs(array(Ne*exp(-dt0/e_lifetime), dtype=int64), eff_extract)
-    S2 = st.norm.rvs(Ne_ext*SE_size,sqrt(SE_res**2 * Ne_ext),size=size(Ne_ext))
-    S2 = S2*exp(dt0/e_lifetime)/eff_extract
+    S2_raw = st.norm.rvs(Ne_ext*SE_size,sqrt(SE_res**2 * Ne_ext),size=size(Ne_ext))
+    S2 = S2_raw*exp(dt0/e_lifetime)/eff_extract
 
     Eee_min = min(Edata) #for integral
     Eee_max = max(Edata) #for integral
@@ -70,10 +70,10 @@ Esim_max=200):
     #text(1,0.013,'PP+7Be',fontsize=16)
     plt.rcParams.update({'font.size': 18})
 
-    return Nph, Ne, Ne_ext, S1_spike, S1, S2, NS1_coin, Rate_evts_kg_day, LZ_exposure_factor
+    return Nph, Ne, Ne_ext, S1_spike, S1, S2, S2_raw, NS1_coin, Rate_evts_kg_day, LZ_exposure_factor
 
 '''Define function WIMP mass to S1&S2 for LZ'''
-def WIMP2NphNe(mWmp=50,nSim=1e5, kg_days=5600*1000, f_drift=700,g1=0.075,SPE_res= 0.5, minSpikePE=0.25, eff_extract=0.95,SE_size=50,SE_res=sqrt(50),e_lifetime=1000, dt0=500):
+def WIMP2NphNe(mWmp=50,nSim=1e5, kg_days=5600*1000, f_drift=700,g1=0.075,SPE_res= 0.5, minSpikePE=0.25, eff_extract=0.95,SE_size=50,SE_res=10,e_lifetime=1000, dt0=500):
     '''input: ParticleType('ER' or 'NR'), file path to diff spectrum, total rate in evts/kg/day, drift field V/cm, g1, SPE_res, electron extraction efficiency, SE size, sigSE, electron lifetime, center of detector)'''
     #nSim=ceil(total_rate*5600*1000)# use total_rate= Calc_Rate_evts_kg_day to Simulate 1 nominal LZ exposure
     Er = rates.WIMP.genRandEnergies(nSim, mW=mWmp)
@@ -82,8 +82,8 @@ def WIMP2NphNe(mWmp=50,nSim=1e5, kg_days=5600*1000, f_drift=700,g1=0.075,SPE_res
     NS1_coin=st.binom.rvs(S1_spike,1-math.erfc(((1-minSpikePE)/SPE_res)/sqrt(2))/2) #takes at least minSpikePE to produce a spike, use binomial probability calculated from erfc
     S1 = st.norm.rvs(S1_spike,sqrt(S1_spike)*SPE_res,size=size(S1_spike)) #single PE resolution with sigma=sqrt(N)*sig_PE
     Ne_ext = st.binom.rvs(array(Ne*exp(-dt0/e_lifetime), dtype=int64), eff_extract)
-    S2 = st.norm.rvs(Ne_ext*SE_size,sqrt(SE_res**2 * Ne_ext),size=size(Ne_ext))
-    S2 = S2*exp(dt0/e_lifetime)/eff_extract
+    S2_raw = st.norm.rvs(Ne_ext*SE_size,sqrt(SE_res**2 * Ne_ext),size=size(Ne_ext))
+    S2 = S2_raw*exp(dt0/e_lifetime)/eff_extract
 
     Er_min = min(Er) #for integral
     Er_max = max(Er) #for integral
@@ -104,10 +104,10 @@ def WIMP2NphNe(mWmp=50,nSim=1e5, kg_days=5600*1000, f_drift=700,g1=0.075,SPE_res
     #text(1,0.013,'PP+7Be',fontsize=16)
     plt.rcParams.update({'font.size': 18})
 
-    return Nph, Ne, Ne_ext, S1_spike, S1, S2, NS1_coin, WmpRate, LZ_exposure_factor
+    return Nph, Ne, Ne_ext, S1_spike, S1, S2, S2_raw, NS1_coin, WmpRate, LZ_exposure_factor
     
 '''Define function to generate flat ER and NR bands'''    
-def genBands(nSim=1e5,maxS1=50,f_drift=700,g1=0.075,SPE_res= 0.5,eff_extract=0.95,SE_size=50,SE_res=sqrt(50),e_lifetime=1000, dt0=500,minSpikePE=0.25,min_NS1_coin=3, min_Ne_ext=5 ):
+def genBands(nSim=1e5,maxS1=50,f_drift=700,g1=0.075,SPE_res= 0.5,eff_extract=0.95,SE_size=50,SE_res=10,e_lifetime=1000, dt0=500,minSpikePE=0.25,min_NS1_coin=3, min_Ne_ext=5 ):
     #Calculate the NR band, and count below that for acceptance ########
     maxEr=100 #keVnr, for flat spectrum... DD
     Flat_Er = maxEr*st.uniform.rvs(size=nSim); #0-100 keVnr
@@ -116,8 +116,8 @@ def genBands(nSim=1e5,maxS1=50,f_drift=700,g1=0.075,SPE_res= 0.5,eff_extract=0.9
     NS1_coin=st.binom.rvs(S1_spike,1-math.erfc(((1-minSpikePE)/SPE_res)/sqrt(2))/2) #takes at least minSpikePE to produce a spike, use binomial probability calculated from erfc
     S1 = st.norm.rvs(S1_spike,sqrt(S1_spike)*SPE_res,size=size(S1_spike)) #single PE resolution with sigma=sqrt(N)*sig_PE
     Ne_ext = st.binom.rvs(array(Ne*exp(-dt0/e_lifetime), dtype=int64), eff_extract)
-    S2 = st.norm.rvs(Ne_ext*SE_size,sqrt(SE_res**2 * Ne_ext),size=size(Ne_ext))
-    S2 = S2*exp(dt0/e_lifetime)/eff_extract
+    S2_raw = st.norm.rvs(Ne_ext*SE_size,sqrt(SE_res**2 * Ne_ext),size=size(Ne_ext))
+    S2 = S2_raw*exp(dt0/e_lifetime)/eff_extract
     S1_bins=linspace(1,maxS1,maxS1)
     S1_bin_cen_n=empty_like(S1_bins)
     mean_S2oS1_n=empty_like(S1_bins)
@@ -134,7 +134,7 @@ def genBands(nSim=1e5,maxS1=50,f_drift=700,g1=0.075,SPE_res= 0.5,eff_extract=0.9
     E_bins=linspace(1,maxEr,maxEr)
     E_bin_cen_n=empty_like(E_bins)
     Eff_n=empty_like(E_bins)
-    det_cuts= (NS1_coin>=min_NS1_coin) & (Ne_ext>=min_Ne_ext)
+    det_cuts= (NS1_coin>=min_NS1_coin) & (S2_raw>=min_Ne_ext*SE_size)
     for index, Es in enumerate(E_bins):
         cut=det_cuts & inrange(Flat_Er,[Es-0.5,Es+0.5])
         E_bin_cen_n[index]=mean(Flat_Er[cut])
@@ -148,15 +148,15 @@ def genBands(nSim=1e5,maxS1=50,f_drift=700,g1=0.075,SPE_res= 0.5,eff_extract=0.9
     NS1_coin=st.binom.rvs(S1_spike,1-math.erfc(((1-minSpikePE)/SPE_res)/sqrt(2))/2) #takes at least minSpikePE to produce a spike, use binomial probability calculated from erfc
     S1 = st.norm.rvs(S1_spike,sqrt(S1_spike)*SPE_res,size=size(S1_spike)) #single PE resolution with sigma=sqrt(N)*sig_PE
     Ne_ext = st.binom.rvs(array(Ne*exp(-dt0/e_lifetime), dtype=int64), eff_extract)
-    S2 = st.norm.rvs(Ne_ext*SE_size,sqrt(SE_res**2 * Ne_ext),size=size(Ne_ext))
-    S2 = S2*exp(dt0/e_lifetime)/eff_extract
+    S2_raw = st.norm.rvs(Ne_ext*SE_size,sqrt(SE_res**2 * Ne_ext),size=size(Ne_ext))
+    S2 = S2_raw*exp(dt0/e_lifetime)/eff_extract
     S1_bins=linspace(1,maxS1,maxS1)
     S1_bins=linspace(1,maxS1,maxS1)
     S1_bin_cen_e=empty_like(S1_bins)
     mean_S2oS1_e=empty_like(S1_bins)
     stdev_S2oS1_e=empty_like(S1_bins)
     #Find the ER S2/S1 band at each S1
-    det_cuts= (NS1_coin>=min_NS1_coin) & (Ne_ext>=min_Ne_ext)
+    det_cuts= (NS1_coin>=min_NS1_coin) & (S2_raw>=min_Ne_ext*SE_size)
     for index, S1s in enumerate(S1_bins):
         cut=det_cuts & inrange(S1,[S1s-0.5,S1s+0.5])
         S1_bin_cen_e[index]=mean(S1[cut])
@@ -176,7 +176,7 @@ def genBands(nSim=1e5,maxS1=50,f_drift=700,g1=0.075,SPE_res= 0.5,eff_extract=0.9
     return S1_bin_cen_n, mean_S2oS1_n, std_S2oS1_n, S1_bin_cen_e, mean_S2oS1_e, stdev_S2oS1_e, E_bin_cen_e, Eff_e, E_bin_cen_n, Eff_n
     
 
-def E2NphNe(ParticleType='ER',Energy = linspace(1,100,1000),f_drift=700,g1=0.075,SPE_res= 0.5,eff_extract=0.95,SE_size=50,SE_res=sqrt(50),e_lifetime=1000, dt0=500):
+def E2NphNe(ParticleType='ER',Energy = linspace(1,100,1000),f_drift=700,g1=0.075,SPE_res= 0.5,eff_extract=0.95,SE_size=50,SE_res=10,e_lifetime=1000, dt0=500):
     #input: ParticleType('ER' or 'NR'), Energy array, drift field V/cm, g1, SPE_res, electron extraction efficiency, SE size, sigSE, electron lifetime, center of detector)
     Nph, Ne = pn.Nph_Ne(ParticleType,f_drift*np.ones_like(Energy),Energy)
     S1 = st.binom.rvs(array(Nph, dtype=int64),g1) #mod g1
