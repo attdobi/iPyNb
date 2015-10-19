@@ -37,9 +37,8 @@ Esim_max=200):
     Rcum = Rcum[cutRange]
     dR = dR[cutRange]
     Edata = Edata[cutRange]
-    Eee=Edata
     r_uniform = np.random.rand(nSim)
-    Eee = np.interp(r_uniform, Rcum, Eee)
+    Eee = np.interp(r_uniform, Rcum, Edata)
     Nph, Ne = pn.Nph_Ne(ParticleType,f_drift*np.ones_like(Eee),Eee)
     S1_spike = st.binom.rvs(array(Nph, dtype=int64),g1) #binomial photon collection
     NS1_coin=st.binom.rvs(S1_spike,1-math.erfc(((1-minSpikePE)/SPE_res)/sqrt(2))/2) #takes at least minSpikePE to produce a spike, use binomial probability calculated from erfc
