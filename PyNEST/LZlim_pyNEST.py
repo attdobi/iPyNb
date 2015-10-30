@@ -52,7 +52,7 @@ Esim_max=200):
     Eee_vect = np.linspace(Eee_min,Eee_max*1.001,2e6)
     dR_vect = np.interp(Eee_vect[Eee_vect>=0.1],Edata[Edata>=0.1],dR[Edata>=0.1]) # Start integrating at 0.1 keV
     Rate_evts_kg_day = float(dR_vect.sum() * np.diff(Eee_vect[:2])) #evts/kg/day 100% acceptance
-    LZ_exposure_factor=nSim/(Rate_evts_kg_day*5600*1000)
+    LZ_exposure_factor=nSim/(Rate_evts_kg_day*kg_days)
     print('total between {:.2f} and {:.2f} keV = {:g} [evts/kg/day]'.format(Eee_min, Eee_max, Rate_evts_kg_day)) #evts/kg/day
     print('LZ exposure factor = {:g}'.format(LZ_exposure_factor)) #evts/kg/day
 
@@ -89,7 +89,7 @@ def WIMP2NphNe(mWmp=50,nSim=1e5, kg_days=5600*1000, f_drift=700,g1=0.075,SPE_res
     Er_vect = np.linspace(Er_min,Er_max*1.01,2e6)
     dR_vect = rates.WIMP.WIMPdiffRate(Er_vect, mW=mWmp, sig=1e-45)
     WmpRate = float((dR_vect.sum() * np.diff(Er_vect[:2])) / (1e-9)) #evts/kg/day per 1 pb, 100% acceptance
-    LZ_exposure_factor=nSim/(WmpRate*5600*1000)
+    LZ_exposure_factor=nSim/(WmpRate*kg_days)
     print('total rate above {:.2f} keV = {:g} [evts/kg/day per pb]'.format(Er_min, WmpRate)) #evts/kg/day/pb
     print('LZ exposure factor per pb = {:g}'.format(LZ_exposure_factor)) #evts/kg/day
 
@@ -122,7 +122,7 @@ def genBands(nSim=1e5,maxS1=50,f_drift=700,g1=0.075,SPE_res= 0.5,eff_extract=0.9
     mean_S2oS1_n=empty_like(S1_bins)
     std_S2oS1_n=empty_like(S1_bins)
     #Find the NR S2/S1 band at each S1
-    det_cuts= (NS1_coin>=min_NS1_coin) & (Ne_ext>=min_Ne_ext)
+    det_cuts= (NS1_coin>=min_NS1_coin) & (S2_raw>=min_Ne_ext*SE_size)
     for index, S1s in enumerate(S1_bins):
         cut=det_cuts & inrange(S1,[S1s-0.5,S1s+0.5])
         S1_bin_cen_n[index]=mean(S1[cut])
