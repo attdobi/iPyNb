@@ -1,0 +1,13 @@
+Energy [keVnra]	Energy uncertainty [keVnra]	diagonal pos. rec. bias. systematic uncertainty (up and to left) [frac]	diagonal  pos. rec. bias. systematic uncertainty (down and to right) [frac]	Qy [electrons / keVnra]	Qy lower uncertainty [electrons / keVnra]	Qy upper uncertainty [electrons / keVnra]
+						
+0.6976	0.1321	0.0227	0.0832	8.171	2.1095	2.4223
+1.1046	0.1829	0.0185	0.0522	7.4236	1.6706	1.8996
+1.4675	0.1205	0.0126	0.0364	10.0849	1.5656	1.5368
+1.9983	0.1001	0.008	0.0294	8.0068	0.6413	0.8511
+2.7728	0.0986	0.0066	0.0217	7.5014	0.5394	0.4781
+3.8574	0.0829	0.0046	0.0132	7.2588	0.2915	0.3365
+5.5546	0.0927	0.0024	0.0066	7.1652	0.2236	0.2469
+8.0212	0.0966	0.0005	0.0016	6.7945	0.1651	0.1544
+11.5153	0.1217	-0.0013	-0.0031	5.8792	0.1327	0.1176
+16.5615	0.1612	-0.0023	-0.0074	5.2773	0.1312	0.1094
+24.2017	0.2201	-0.0035	-0.0098	4.6236	0.102	0.127
