@@ -7,6 +7,9 @@ home_dir=os.popen("echo $HOME").read()
 home_dir=home_dir.split('\n')[0] # parse the string and remove the /n at the end....
 sys.path.insert(2,home_dir+'/iPyNb/NERSC_Import') #make sure you have iPyNb checked out from AD
 sys.path.insert(2,home_dir+'/LZ_git/fastNEST/libNEST') #add to import Lib-NEST
+#Need to add this to make Skin Response maps load in for libNEST
+os.environ['NESTPATH']='/global/homes/a/adobi/LZ_git/fastNEST/libNEST/'
+os.environ['NESTDATA']='/global/homes/a/adobi/LZ_git/fastNEST/LCEAndEFieldMaps/'
 import libNEST
 sys.path.insert(2, '//global/project/projectdirs/lux/data') #frozen with NEST v98\n", #on pdsf. or point to aLib in LUXCode
 from aLib import inrange, eff, rates
@@ -53,6 +56,7 @@ def NEST_setup(ParticleType='NR',energy=10,f_drift=-1,xe_density=2.888,drift_tim
         myDet.LZSettings()
     #Modify custom detector parameters
     myDet.g1=g1
+    myDet.g1_gas=g1
     myDet.nFold=nFold
     myDet.e_life=e_lifetime
     myDet.ee=eff_extract
@@ -183,14 +187,17 @@ def WIMP2NphNe(NEST=NEST_setup(), mWmp=50,nSim=1e5, kg_days=5600*1000):
     return Nph, Ne, S1, S2, S1c, S2c, WmpRate, Det_exposure_factor
     
 '''Define function to generate flat ER and NR bands'''    
-def genBands(NEST=NEST_setup(),nSim=1e5, maxS1=50, S2raw_min=450):
+def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450):
     
     #start with NR
     NEST.SetParticleType(0)
     
     #Calculate the NR band, and count below that for acceptance ########
     maxEr=100 #keVnr, for flat spectrum... DD
-    Flat_Er = maxEr*st.uniform.rvs(size=nSim); #0-100 keVnr
+    #Flat_Er = maxEr*st.uniform.rvs(size=nSim); #0-100 keVnr
+    
+    #use a 50 GeV WIMP for discrimnation
+    Er = rates.WIMP.genRandEnergies(nSim, mW=50)
     
     ## Generate Signal in the detector ##
     Nph=[]
@@ -200,7 +207,7 @@ def genBands(NEST=NEST_setup(),nSim=1e5, maxS1=50, S2raw_min=450):
     S1c=[]
     S2c=[]
     
-    for en in Flat_Er:
+    for en in Er:
         NEST.SetEnergy(en)
         NEST.DetectorResponse()
         Nph.append(NEST.GetNumPhotons())
@@ -235,13 +242,16 @@ def genBands(NEST=NEST_setup(),nSim=1e5, maxS1=50, S2raw_min=450):
     Eff_n=empty_like(E_bins)
     det_cuts= (S1c>0) & (S2>=S2raw_min)
     for index, Es in enumerate(E_bins):
-        cut=det_cuts & inrange(Flat_Er,[Es-0.5,Es+0.5])
-        E_bin_cen_n[index]=mean(Flat_Er[cut])
-        Eff_n[index]=sum(cut)/sum(inrange(Flat_Er,[Es-0.5,Es+0.5])) #cut/total_in_bin
-        
-    #Calculate the ER band ####################################################
+        cut=det_cuts & inrange(Er,[Es-0.5,Es+0.5])
+        E_bin_cen_n[index]=mean(Er[cut])
+        Eff_n[index]=sum(cut)/sum(inrange(Er,[Es-0.5,Es+0.5])) #cut/total_in_bin
+   
+    #get NR mean, with a smooth spline(need this for discrimination calculation)
+    sNR = ip.UnivariateSpline(S1_bin_cen_n, mean_S2oS1_n,s=.001)
+    
+    #Calculate the ER band and discrimination ####################################################
     maxEe=50 #keVee, for flat ER spectrum
-    Flat_Ee = maxEe*st.uniform.rvs(size=nSim); #0-100 keVee
+    Flat_Ee = maxEe*st.uniform.rvs(size=nSim); #0-50 keVee
     ## Generate Signal in the detector ##
     Nph=[]
     Ne=[]
@@ -251,7 +261,7 @@ def genBands(NEST=NEST_setup(),nSim=1e5, maxS1=50, S2raw_min=450):
     S2c=[]
     
     NEST.SetParticleType(1) #set to ER events
-    for en in Flat_Er:
+    for en in Flat_Ee:
         NEST.SetEnergy(en)
         NEST.DetectorResponse()
         Nph.append(NEST.GetNumPhotons())
@@ -273,6 +283,8 @@ def genBands(NEST=NEST_setup(),nSim=1e5, maxS1=50, S2raw_min=450):
     S1_bin_cen_e=empty_like(S1_bins)
     mean_S2oS1_e=empty_like(S1_bins)
     stdev_S2oS1_e=empty_like(S1_bins)
+    num_leak_e=empty_like(S1_bins)
+    num_total_e=empty_like(S1_bins)
     #Find the ER S2/S1 band at each S1
     det_cuts= (S1c>0) & (S2>=S2raw_min)
     for index, S1s in enumerate(S1_bins):
@@ -280,7 +292,11 @@ def genBands(NEST=NEST_setup(),nSim=1e5, maxS1=50, S2raw_min=450):
         S1_bin_cen_e[index]=mean(S1c[cut])
         mean_S2oS1_e[index]=mean(log10(S2c[cut]/S1c[cut]))
         stdev_S2oS1_e[index]=std(log10(S2c[cut]/S1c[cut]))
-        
+        #calculate discrimination
+        num_leak_e[index]=sum(log10(S2c[cut]/S1c[cut])<sNR(S1c[cut])) #num below NR mean
+        num_total_e[index]=sum(cut)
+           
+    
     #Calc Er Efficiency vs E
     E_bins=linspace(1,maxEe,maxEe)
     E_bin_cen_e=empty_like(E_bins)
@@ -291,7 +307,7 @@ def genBands(NEST=NEST_setup(),nSim=1e5, maxS1=50, S2raw_min=450):
         E_bin_cen_e[index]=mean(Flat_Ee[cut])
         Eff_e[index]=sum(cut)/sum(inrange(Flat_Ee,[Es-0.5,Es+0.5])) #cut/total_in_bin
 
-    return S1_bin_cen_n, mean_S2oS1_n, std_S2oS1_n, S1_bin_cen_e, mean_S2oS1_e, stdev_S2oS1_e, E_bin_cen_e, Eff_e, E_bin_cen_n, Eff_n
+    return S1_bin_cen_n, mean_S2oS1_n, std_S2oS1_n, S1_bin_cen_e, mean_S2oS1_e, stdev_S2oS1_e, E_bin_cen_e, Eff_e, E_bin_cen_n, Eff_n, num_leak_e, num_total_e
     
 
 def E2NphNe(ParticleType='ER',Energy = linspace(1,100,1000),f_drift=700,g1=0.075,SPE_res= 0.5,eff_extract=0.95,SE_size=50,SE_res=10,e_lifetime=1000, dt0=500):
