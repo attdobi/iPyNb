@@ -28,12 +28,12 @@ def gauss(x, *p):
     return A*np.exp(-(x-mu)**2/(2.*sigma**2))
 
 '''Define color Scatter Plot'''
-def scatterColor(x,y,a=0.8):
+def scatterColor(x,y,a=0.8,size=8):
     xy=vstack([x,y])
     xy[isnan(xy)]=0
     xy[isinf(xy)]=0
     z= st.gaussian_kde(xy)(xy)
-    plt.scatter(x,y,c=z,s=8,edgecolor='',alpha=a)
+    plt.scatter(x,y,c=z,s=size,edgecolor='',alpha=a)
     return
 
 def NEST_setup(ParticleType='NR',energy=10,f_drift=-1,xe_density=2.888,drift_time=-1,g1=0.075, nFold=3, eff_extract=0.95,e_lifetime=845, spEff_direct=0.9, Det='LZ', custom=False):
@@ -197,7 +197,7 @@ def WIMP2NphNe(NEST=NEST_setup(), mWmp=50,nSim=1e5, kg_days=5600*1000):
     return Nph, Ne, S1, S2, S1c, S2c, WmpRate, Det_exposure_factor
     
 '''Define function to generate flat ER and NR bands'''    
-def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450):
+def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450, mWmp=50):
     
     #start with NR
     NEST.SetParticleType(0)
@@ -206,8 +206,8 @@ def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450):
     maxEr=100 #keVnr, for flat spectrum... DD
     #Er = maxEr*st.uniform.rvs(size=nSim); #0-100 keVnr
     
-    #use a 50 GeV WIMP for discrimnation
-    Er = rates.WIMP.genRandEnergies(nSim, mW=50)
+    #Default, use a 50 GeV WIMP for discrimnation
+    Er = rates.WIMP.genRandEnergies(nSim, mW=mWmp)
     
     ## Generate Signal in the detector ##
     Nph=[]
@@ -310,7 +310,7 @@ def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450):
     S1_bins=linspace(1,maxS1,maxS1)
     S1_bin_cen_e=empty_like(S1_bins)
     mean_S2oS1_e=empty_like(S1_bins)
-    stdev_S2oS1_e=empty_like(S1_bins)
+    std_S2oS1_e=empty_like(S1_bins)
     num_leak_e=empty_like(S1_bins)
     num_total_e=empty_like(S1_bins)
     leak_gauss_e=empty_like(S1_bins)
@@ -320,12 +320,12 @@ def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450):
         cut=det_cuts & inrange(S1c,[S1s-1/2,S1s+1/2])
         S1_bin_cen_e[index]=mean(S1c[cut])
         mean_S2oS1_e[index]=mean(log10(S2c[cut]/S1c[cut]))
-        stdev_S2oS1_e[index]=std(log10(S2c[cut]/S1c[cut]))
+        std_S2oS1_e[index]=std(log10(S2c[cut]/S1c[cut]))
         #calculate discrimination
         num_leak_e[index]=sum(log10(S2c[cut]/S1c[cut])<sNR(S1c[cut])) #num below NR mean
         num_total_e[index]=sum(cut)
         #Gaussian overlap
-        nsig=(mean_S2oS1_e[index]-sNR(S1_bin_cen_e[index]))/stdev_S2oS1_e[index] #(meanER-meanNR)/sigER
+        nsig=(mean_S2oS1_e[index]-sNR(S1_bin_cen_e[index]))/std_S2oS1_e[index] #(meanER-meanNR)/sigER
         leak_gauss_e[index]=sp.special.erfc(nsig/sqrt(2))/2
            
     
@@ -339,7 +339,7 @@ def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450):
         E_bin_cen_e[index]=mean(Flat_Ee[cut])
         Eff_e[index]=sum(cut)/sum(inrange(Flat_Ee,[Es-0.5,Es+0.5])) #cut/total_in_bin
 
-    return S1_bin_cen_n, mean_S2oS1_n, std_S2oS1_n, S1_bin_cen_e, mean_S2oS1_e, stdev_S2oS1_e, E_bin_cen_e, Eff_e, E_bin_cen_n, Eff_n, num_leak_e, num_total_e, leak_gauss_e, sNR
+    return S1_bin_cen_n, mean_S2oS1_n, std_S2oS1_n, S1_bin_cen_e, mean_S2oS1_e, std_S2oS1_e, E_bin_cen_e, Eff_e, E_bin_cen_n, Eff_n, num_leak_e, num_total_e, leak_gauss_e, sNR
     
 
 def E2NphNe(ParticleType='ER',Energy = linspace(1,100,1000),f_drift=700,g1=0.075,SPE_res= 0.5,eff_extract=0.95,SE_size=50,SE_res=10,e_lifetime=1000, dt0=500):
