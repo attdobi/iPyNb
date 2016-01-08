@@ -202,12 +202,12 @@ def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450, mWmp=50):
     #start with NR
     NEST.SetParticleType(0)
     
-    #Calculate the NR band, and count below that for acceptance ########
-    maxEr=100 #keVnr, for flat spectrum... DD
-    #Er = maxEr*st.uniform.rvs(size=nSim); #0-100 keVnr
-    
+    maxEr=100 #keVnr, for flat spectrum
     #Default, use a 50 GeV WIMP for discrimnation
-    Er = rates.WIMP.genRandEnergies(nSim, mW=mWmp)
+    if mWmp==-1:
+        Er = maxEr*st.uniform.rvs(size=nSim); #0-100 keVnr
+    else:
+        Er = rates.WIMP.genRandEnergies(nSim, mW=mWmp)
     
     ## Generate Signal in the detector ##
     Nph=[]
