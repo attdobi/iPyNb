@@ -144,7 +144,7 @@ def dN2S1S2(NEST=NEST_setup(), file_path='data/PP_7Be_evt_ton_year_keV_lin_noDis
     return Nph, Ne, S1, S2, S1c, S2c, Rate_evts_kg_day, Det_exposure_factor
 
 '''Define function WIMP mass to S1&S2 for LZ'''
-def WIMP2NphNe(NEST=NEST_setup(), mWmp=50,nSim=1e5, kg_days=5600*1000):
+def WIMP2NphNe(NEST=NEST_setup(), mWmp=50,nSim=1e5, kg_days=5600*1000,showFig=True):
     '''input: NEST=NEST_setup(), file path to diff spectrum, total rate in evts/kg/day'''
         
     #nSim=ceil(total_rate*5600*1000)# use total_rate= Calc_Rate_evts_kg_day to Simulate 1 nominal LZ exposure
@@ -183,16 +183,17 @@ def WIMP2NphNe(NEST=NEST_setup(), mWmp=50,nSim=1e5, kg_days=5600*1000):
     Det_exposure_factor=nSim/(WmpRate*kg_days)
     print('total rate above {:.2f} keV = {:g} [evts/kg/day per pb]'.format(Er_min, WmpRate)) #evts/kg/day/pb
     print('Detector exposure factor per pb = {:g}'.format(Det_exposure_factor)) #evts/kg/day
-
-    plt.figure()
-    plt.loglog(Er_vect,dR_vect*1000*365,'-k')
-    plt.hold('on')
-    #ylim([1e-3, 1e0])
-    #xlim([.5, 1e2])
-    plt.xlabel('Recoil Energy [keV]')
-    plt.ylabel('Event Rate [/ton/year/keV/1e-9 pb]')
-    #text(1,0.013,'PP+7Be',fontsize=16)
-    plt.rcParams.update({'font.size': 18})
+    
+    if showFig==True:
+        plt.figure()
+        plt.loglog(Er_vect,dR_vect*1000*365,'-k')
+        plt.hold('on')
+        #ylim([1e-3, 1e0])
+        #xlim([.5, 1e2])
+        plt.xlabel('Recoil Energy [keV]')
+        plt.ylabel('Event Rate [/ton/year/keV/1e-9 pb]')
+        #text(1,0.013,'PP+7Be',fontsize=16)
+        plt.rcParams.update({'font.size': 18})
 
     return Nph, Ne, S1, S2, S1c, S2c, WmpRate, Det_exposure_factor
     
