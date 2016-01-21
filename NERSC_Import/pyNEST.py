@@ -141,7 +141,7 @@ def dN2S1S2(NEST=NEST_setup(), file_path='data/PP_7Be_evt_ton_year_keV_lin_noDis
     #text(1,0.013,'PP+7Be',fontsize=16)
     plt.rcParams.update({'font.size': 18})
 
-    return Nph, Ne, S1, S2, S1c, S2c, Rate_evts_kg_day, Det_exposure_factor
+    return Eee, Nph, Ne, S1, S2, S1c, S2c, Rate_evts_kg_day, Det_exposure_factor
 
 '''Define function WIMP mass to S1&S2 for LZ'''
 def WIMP2NphNe(NEST=NEST_setup(), mWmp=50,nSim=1e5, kg_days=5600*1000,showFig=True):
@@ -195,10 +195,10 @@ def WIMP2NphNe(NEST=NEST_setup(), mWmp=50,nSim=1e5, kg_days=5600*1000,showFig=Tr
         #text(1,0.013,'PP+7Be',fontsize=16)
         plt.rcParams.update({'font.size': 18})
 
-    return Nph, Ne, S1, S2, S1c, S2c, WmpRate, Det_exposure_factor
+    return Er, Nph, Ne, S1, S2, S1c, S2c, WmpRate, Det_exposure_factor
     
 '''Define function to generate flat ER and NR bands'''    
-def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450, mWmp=50):
+def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450, Ermin=0, mWmp=50):
     
     #start with NR
     NEST.SetParticleType(0)
@@ -242,7 +242,7 @@ def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450, mWmp=50):
     coeff_n=[]
     var_matrix_n=[]
     #Find the NR S2/S1 band at each S1
-    det_cuts= (S1c>0) & (S2c>0) & (S2>=S2raw_min)
+    det_cuts= (S1c>0) & (S2c>0) & (S2>=S2raw_min) & (Er>=Ermin)
     for index, S1s in enumerate(S1_bins):
         cut=det_cuts & inrange(S1c,[S1s-1/2,S1s+1/2])
         S1_bin_cen_n[index]=mean(S1c[cut])
