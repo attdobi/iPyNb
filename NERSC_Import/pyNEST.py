@@ -139,7 +139,7 @@ def dN2S1S2(NEST=NEST_setup(), file_path='data/PP_7Be_evt_ton_year_keV_lin_noDis
     plt.xlabel('Recoil Energy [keV]')
     plt.ylabel('Event Rate [/ton/year/keV]')
     #text(1,0.013,'PP+7Be',fontsize=16)
-    plt.rcParams.update({'font.size': 18})
+    #plt.rcParams.update({'font.size': 18})
 
     return Eee, Nph, Ne, S1, S2, S1c, S2c, Rate_evts_kg_day, Det_exposure_factor
 
