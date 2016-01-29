@@ -269,7 +269,7 @@ def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450, Ermin=0, mWmp=
     #sNR = ip.UnivariateSpline(S1_bin_cen_n, coeff_n[:,1],s=0.005)
     
     #Calc Nr Efficiency vs E
-    E_bins=linspace(1,maxEr,maxEr)
+    E_bins=linspace(0,maxEr,maxEr)
     E_bin_cen_n=empty_like(E_bins)
     Eff_n=empty_like(E_bins)
     det_cuts= (S1c>0) & (S2>=S2raw_min)
@@ -331,7 +331,7 @@ def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450, Ermin=0, mWmp=
            
     
     #Calc Er Efficiency vs E
-    E_bins=linspace(1,maxEe,maxEe)
+    E_bins=linspace(0,maxEe,maxEe)
     E_bin_cen_e=empty_like(E_bins)
     Eff_e=empty_like(E_bins)
     det_cuts= (S1c>0) & (S2>=S2raw_min)
