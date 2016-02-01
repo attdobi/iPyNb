@@ -239,6 +239,7 @@ def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450, Ermin=0, mWmp=
     S1_bin_cen_n=empty_like(S1_bins)
     mean_S2oS1_n=empty_like(S1_bins)
     std_S2oS1_n=empty_like(S1_bins)
+    E_S1_n=empty_like(S1_bins)
     coeff_n=[]
     var_matrix_n=[]
     #Find the NR S2/S1 band at each S1
@@ -248,6 +249,7 @@ def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450, Ermin=0, mWmp=
         S1_bin_cen_n[index]=mean(S1c[cut])
         mean_S2oS1_n[index]=mean(log10(S2c[cut]/S1c[cut]))
         std_S2oS1_n[index]=std(log10(S2c[cut]/S1c[cut]))
+        E_S1_n[index]=mean(Er[cut]) #average E for a given S1  
         #fit Gauss to distibution
         # p0 is the initial guess for the fitting coefficients (A, mu and sigma above)
         #hist, bin_edges = np.histogram(log10(S2c[cut]/S1c[cut]), 20, density=True)
@@ -315,6 +317,7 @@ def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450, Ermin=0, mWmp=
     num_leak_e=empty_like(S1_bins)
     num_total_e=empty_like(S1_bins)
     leak_gauss_e=empty_like(S1_bins)
+    E_S1_e=empty_like(S1_bins)
     #Find the ER S2/S1 band at each S1
     det_cuts= (S1c>0) & (S2c>0) & (S2>=S2raw_min)
     for index, S1s in enumerate(S1_bins):
@@ -328,7 +331,7 @@ def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450, Ermin=0, mWmp=
         #Gaussian overlap
         nsig=(mean_S2oS1_e[index]-sNR(S1_bin_cen_e[index]))/std_S2oS1_e[index] #(meanER-meanNR)/sigER
         leak_gauss_e[index]=sp.special.erfc(nsig/sqrt(2))/2
-           
+        E_S1_e[index]=mean(Flat_Ee[cut]) #average E for a given S1  
     
     #Calc Er Efficiency vs E
     E_bins=linspace(0,maxEe,maxEe)
@@ -339,8 +342,8 @@ def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450, Ermin=0, mWmp=
         cut=det_cuts & inrange(Flat_Ee,[Es-0.5,Es+0.5])
         E_bin_cen_e[index]=mean(Flat_Ee[cut])
         Eff_e[index]=sum(cut)/sum(inrange(Flat_Ee,[Es-0.5,Es+0.5])) #cut/total_in_bin
-
-    return S1_bin_cen_n, mean_S2oS1_n, std_S2oS1_n, S1_bin_cen_e, mean_S2oS1_e, std_S2oS1_e, E_bin_cen_e, Eff_e, E_bin_cen_n, Eff_n, num_leak_e, num_total_e, leak_gauss_e, sNR
+        
+    return S1_bin_cen_n, mean_S2oS1_n, std_S2oS1_n, S1_bin_cen_e, mean_S2oS1_e, std_S2oS1_e, E_bin_cen_e, Eff_e, E_S1_e, E_bin_cen_n, Eff_n, E_S1_n, num_leak_e, num_total_e, leak_gauss_e, sNR
     
 
 def E2NphNe(ParticleType='ER',Energy = linspace(1,100,1000),f_drift=700,g1=0.075,SPE_res= 0.5,eff_extract=0.95,SE_size=50,SE_res=10,e_lifetime=1000, dt0=500):
