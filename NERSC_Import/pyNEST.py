@@ -9,8 +9,8 @@ home_dir=home_dir.split('\n')[0] # parse the string and remove the /n at the end
 sys.path.insert(2,home_dir+'/iPyNb/NERSC_Import') #make sure you have iPyNb checked out from AD
 sys.path.insert(2,home_dir+'/LZ_git/fastNEST/libNEST') #add to import Lib-NEST
 #Need to add this to make Skin Response maps load in for libNEST
-os.environ['NESTPATH']='/global/homes/a/adobi/LZ_git/fastNEST/libNEST/'
-os.environ['NESTDATA']='/global/homes/a/adobi/LZ_git/fastNEST/LCEAndEFieldMaps/'
+os.environ['NESTPATH']=home_dir+'/LZ_git/fastNEST/libNEST/'
+os.environ['NESTDATA']=home_dir+'/LZ_git/fastNEST/LCEAndEFieldMaps/'
 import libNEST
 sys.path.insert(2, '//global/project/projectdirs/lux/data') #frozen with NEST v98\n", #on pdsf. or point to aLib in LUXCode
 from aLib import inrange, eff, rates
