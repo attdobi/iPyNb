@@ -9,6 +9,6 @@
   "{connection_file}"
  ],
  "env": {
-    "LD_LIBRARY_PATH": "/global/project/projectdirs/lux/Tools/root_pdsf/root/lib/:/project/projectdirs/lux/Tools/anaconda/pkgs/boost-1.57.0-4/lib"
+    "LD_LIBRARY_PATH": "/global/project/projectdirs/lux/Tools/root_pdsf/root/lib:/global/project/projectdirs/lux/Tools/anaconda/pkgs/boost-1.57.0-4/lib"
  }
 }

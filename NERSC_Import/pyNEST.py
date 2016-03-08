@@ -1,40 +1,48 @@
 from __future__ import division
-import pylab
-import scipy.interpolate as ip
-from scipy.optimize import curve_fit
 import sys
 import os
-home_dir=os.popen("echo $HOME").read()
-home_dir=home_dir.split('\n')[0] # parse the string and remove the /n at the end....
-sys.path.insert(2,home_dir+'/iPyNb/NERSC_Import') #make sure you have iPyNb checked out from AD
-sys.path.insert(2,home_dir+'/LZ_git/fastNEST/libNEST') #add to import Lib-NEST
-#Need to add this to make Skin Response maps load in for libNEST
-os.environ['NESTPATH']=home_dir+'/LZ_git/fastNEST/libNEST/'
-os.environ['NESTDATA']=home_dir+'/LZ_git/fastNEST/LCEAndEFieldMaps/'
+sys.path.insert(2,'/global/projecta/projectdirs/lux/Tools/fastNEST/libNEST') #add to import libNEST
 import libNEST
-sys.path.insert(2, '//global/project/projectdirs/lux/data') #frozen with NEST v98\n", #on pdsf. or point to aLib in LUXCode
-from aLib import inrange, eff, rates
-from aLib import pyNEST as pn
+#Need to add this to make Skin Response maps load in for libNEST
+os.environ['NESTPATH']='/global/projecta/projectdirs/lux/Tools/fastNEST/libNEST/'
+os.environ['NESTDATA']='/global/projecta/projectdirs/lux/Tools/fastNEST/LCEAndEFieldMaps/'
+sys.path.insert(2, '//global/project/projectdirs/lux/data') #aLib frozen on pdsf. or point to aLib in LUXCode
+from aLib import inrange, rates
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from numpy import *
 import scipy.stats as st
 import numpy as np
 import scipy as sp
+import scipy.interpolate as ip
+from scipy.optimize import curve_fit
+import scipy.stats as stats
+from scipy.interpolate import interp2d
 
-'''Define gaussian distribution for fitting'''
 def gauss(x, *p):
+    '''Define gaussian distribution for fitting'''
     A, mu, sigma = p
     return A*np.exp(-(x-mu)**2/(2.*sigma**2))
 
-'''Define color Scatter Plot'''
 def scatterColor(x,y,a=0.8,size=8):
+    '''Define color Scatter Plot'''
     xy=vstack([x,y])
     xy[isnan(xy)]=0
     xy[isinf(xy)]=0
     z= st.gaussian_kde(xy)(xy)
     plt.scatter(x,y,c=z,s=size,edgecolor='',alpha=a)
     return
+
+def calc_exposure(S1_cut, S2_cut, S1_win_max=20):
+    '''Calculate LZ nominal exposure'''
+    LZ_count=sum(S1_cut<S1_win_max)/Det_exposure_factor
+    LZ_count_underNr=sum((S1_cut<S1_win_max) & (log10(S2_cut/S1_cut)<sNR(S1_cut)))/Det_exposure_factor
+    sig_LZ_count=sqrt(sum(S1_cut<S1_win_max))/Det_exposure_factor
+    sig_LZ_count_underNr=sqrt(sum((S1_cut<20) & (log10(S2_cut/S1_cut)<sNR(S1_cut))))/Det_exposure_factor
+    print('Count (0 to '+str(S1_win_max) + ' S1) = '+'{:.3f}'.format(LZ_count) + ' +/- ' + '{:.3f}'.format(sig_LZ_count) )
+    print('Count below NR mean (0 to '+str(S1_win_max) + ' S1) = '+'{:.3f}'.format(LZ_count_underNr) + ' +/- ' + '{:.3f}'.format(sig_LZ_count_underNr) )
+    
 
 def NEST_setup(ParticleType='NR',energy=10,f_drift=-1,xe_density=2.888,drift_time=-1,g1=0.075, nFold=3, eff_extract=0.95,e_lifetime=845, spEff_direct=0.9, Det='LZ', custom=False):
     '''input: ParticleType('ER' or 'NR'), energy, drift field V/cm, xe_density, drift_time, g1, nFold_coincidence, electron extraction efficiency,electron lifetime (us),  spEff_direct, Det='LZ' or 'LUX')'''
@@ -346,15 +354,117 @@ def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450, Ermin=0, mWmp=
     return S1_bin_cen_n, mean_S2oS1_n, std_S2oS1_n, S1_bin_cen_e, mean_S2oS1_e, std_S2oS1_e, E_bin_cen_e, Eff_e, E_S1_e, E_bin_cen_n, Eff_n, E_S1_n, num_leak_e, num_total_e, leak_gauss_e, sNR
     
 
-def E2NphNe(ParticleType='ER',Energy = linspace(1,100,1000),f_drift=700,g1=0.075,SPE_res= 0.5,eff_extract=0.95,SE_size=50,SE_res=10,e_lifetime=1000, dt0=500):
-    #input: ParticleType('ER' or 'NR'), Energy array, drift field V/cm, g1, SPE_res, electron extraction efficiency, SE size, sigSE, electron lifetime, center of detector)
-    Nph, Ne = pn.Nph_Ne(ParticleType,f_drift*np.ones_like(Energy),Energy)
-    S1 = st.binom.rvs(array(Nph, dtype=int64),g1) #mod g1
-    #No S1 PMT resolution, assume spike counting
-    #add PMT resolution, assume sigma = 0.5 PE for a single PE collected
-    #S1_B8 = st.norm.rvs(S1_B8,sqrt(S1_B8)*SPE_res,size=size(S1_B8)) #single PE resolution with sigma=sqrt(N)*sig
-    Ne_ext = st.binom.rvs(array(Ne*exp(-dt0/e_lifetime), dtype=int64), eff_extract) #add in mean electron attenuation
-    S2 = st.norm.rvs(Ne_ext*SE_size,sqrt(SE_res**2 * Ne_ext),size=size(Ne_ext)) #adding variance "SE_res**2 * Ne_ext"
-    S2 = S2*exp(dt0/e_lifetime) #correct back the electron lifetime
+def E2NphNe(NEST=NEST_setup(), Energy=10*np.ones(10)):
+    ## Generate Signal in the detector given a NEST object and arrays of energy deposits##
+    Nph=[]
+    Ne=[]
+    S1=[]
+    S2=[]
+    S1c=[]
+    S2c=[]
     
-    return Nph, Ne, S1, S2
+    for en in Energy:
+        NEST.SetEnergy(en)
+        NEST.DetectorResponse()
+        Nph.append(NEST.GetNumPhotons())
+        Ne.append(NEST.GetNumElectrons())
+        S1.append(NEST.GetS1())
+        S2.append(NEST.GetS2())
+        S1c.append(NEST.GetS1c())
+        S2c.append(NEST.GetS2c())
+    
+    Nph=np.array(Nph)
+    Ne=np.array(Ne)
+    S1=np.array(S1)
+    S2=np.array(S2)
+    S1c=np.array(S1c)
+    S2c=np.array(S2c)
+    
+    return Nph, Ne, S1, S2, S1c, S2c
+
+def pdfcont(x,y,nsig=3,color='b',fill=True,fill_alpha=0.2, colormap=plt.cm.Reds, xlim=-1, ylim=-1,bins=50,label=True):
+    ''' draw n-sigma contours around a population of points '''
+    if isinstance(xlim,list):
+        xmin=xlim[0]
+        xmax=xlim[1]
+    else:
+        xmin=min(x)
+        xmax=max(x)
+    if isinstance(ylim,list):
+        ymin=ylim[0]
+        ymax=ylim[1]
+    else:
+        ymin=min(y)
+        ymax=max(y)
+    
+    x_range=linspace(xmin,xmax,bins)
+    y_range=linspace(ymin,ymax,bins)
+    pdf1=stats.kde.gaussian_kde([x,y])
+    # create a grid over which we can evaluate pdf
+    q,w=np.meshgrid(x_range, y_range)
+    r1=pdf1([q.flatten(),w.flatten()])
+    # sample the pdf and find the value at the 95th percentile
+    sig3=stats.scoreatpercentile(pdf1(pdf1.resample(1000)), 0.3)
+    sig2=stats.scoreatpercentile(pdf1(pdf1.resample(1000)), 5)
+    sig1=stats.scoreatpercentile(pdf1(pdf1.resample(1000)), 100-68.26)
+    per50=stats.scoreatpercentile(pdf1(pdf1.resample(1000)), 50)
+    per0=stats.scoreatpercentile(pdf1(pdf1.resample(1000)), 100)
+    # reshape back to 2d
+    r1.shape=(size(y_range),size(x_range))
+
+    levels=[sig1,sig2,sig3][:nsig]
+    # plot the contour at the 95th percentile
+    
+    CS=plt.contour(x_range, y_range, r1, levels,linewidths=3,alpha=1,colors=color, linestyles=['-','--']) #
+    #plt.contour(x_range, y_range, r1, [sig2],colors='c',linewidths=2)
+    #c1=plt.contour(x_range, y_range, r1, [sig1],colors='r',use_clabeltext=True)
+    # Recast levels to new class
+    CS.levels = ['1$\sigma$','2$\sigma$','3$\sigma$'][:nsig]
+
+    #plt.contourf(x_range, y_range, r1,[sig1,per0] ,linewidths=1,alpha=0.5)
+    if fill==True:
+        levels.reverse()
+        levels.append(per0)
+        plt.contourf(x_range, y_range, r1,levels ,linewidths=1,alpha=fill_alpha,cmap=colormap)
+    # Label levels with specially formatted floats
+    #if plt.rcParams["text.usetex"]:
+    #    fmt = r'%r \%%'
+    #else:
+    #    fmt = '%1.3f %%'
+    #    fmt = '%{:} %%'
+    if label==True:
+        plt.clabel(CS, CS.levels, inline=True, fontsize=20)
+    
+#input x,y range in the future for selected region 
+def pdf_gen(x_var,y_var,x_range_sel,y_range_sel,nbins = 100):
+    '''Generate 2D pdf with kernel density '''
+    x_var=np.array(x_var) #first convert to np array for logical cuts
+    y_var=np.array(y_var)
+    cut= (x_var>=x_range_sel[0]) & (x_var<=x_range_sel[1]) & (y_var>=y_range_sel[0]) & (y_var<=y_range_sel[1])
+    x_var=x_var[cut]
+    y_var=y_var[cut]
+    
+    H, xedges, yedges = histogram2d(x_var,y_var, bins=nbins,normed=1)
+    H=H.T
+    xcenters = xedges[:-1] + diff(xedges[:2])/2
+    ycenters = yedges[:-1] + diff(yedges[:2])/2
+    #Construct interpolator
+    pdf = interp2d(xcenters, ycenters, H, kind='linear')
+    x_r=[xedges.min(),xedges.max()]
+    y_r=[yedges.min(),yedges.max()]
+    
+    x_range=linspace(x_range_sel[0],x_range_sel[1],nbins)
+    y_range=linspace(y_range_sel[0],y_range_sel[1],nbins)
+    # fit a KDE to the data
+    pdf=sp.stats.kde.gaussian_kde([x_var,y_var])
+    q,w=np.meshgrid(x_range, y_range)
+    r1=pdf([q.flatten(),w.flatten()])
+    r1.shape=(size(y_range),size(x_range))
+    r1=r1/sum(r1) #normalize the pdf
+    return r1, x_var, y_var, x_range, y_range
+
+def interpAD(Z,X,Y):
+    vals=[]
+    for x,y in zip (X,Y):
+        vals.append(Z(x,y)[0])
+    return np.array(vals)
