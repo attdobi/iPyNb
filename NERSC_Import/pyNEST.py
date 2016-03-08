@@ -34,8 +34,8 @@ def scatterColor(x,y,a=0.8,size=8):
     plt.scatter(x,y,c=z,s=size,edgecolor='',alpha=a)
     return
 
-def calc_exposure(S1_cut, S2_cut, S1_win_max=20):
-    '''Calculate LZ nominal exposure'''
+def calc_exposure(S1_cut, S2_cut, Det_exposure_factor, sNR, S1_win_max=20):
+    '''Calculate LZ nominal exposure, S1_cut, S2_cut, Det_exposure_factor, sNR(spline NR mean), S1_win_max'''
     LZ_count=sum(S1_cut<S1_win_max)/Det_exposure_factor
     LZ_count_underNr=sum((S1_cut<S1_win_max) & (log10(S2_cut/S1_cut)<sNR(S1_cut)))/Det_exposure_factor
     sig_LZ_count=sqrt(sum(S1_cut<S1_win_max))/Det_exposure_factor
@@ -207,7 +207,8 @@ def WIMP2NphNe(NEST=NEST_setup(), mWmp=50,nSim=1e5, kg_days=5600*1000,showFig=Tr
     
 '''Define function to generate flat ER and NR bands'''    
 def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450, Ermin=0, mWmp=50):
-    
+    '''input: NEST obj, nSim, maxS1, S2raw_min, Ermin, mWmp.    
+   output: S1_bin_cen_n, mean_S2oS1_n, std_S2oS1_n, S1_bin_cen_e, mean_S2oS1_e, std_S2oS1_e, E_bin_cen_e, Eff_e, E_S1_e(average E for a given S1), E_bin_cen_n, Eff_n, E_S1_n(average E for a given S1), num_leak_e(vs S1 bin), num_total_e(vs S1 bin), leak_gauss_e(vs S1 bin), sNR(spline NR band) ''' 
     #start with NR
     NEST.SetParticleType(0)
     
