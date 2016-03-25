@@ -275,7 +275,7 @@ def genBands(NEST=NEST_setup(),nSim=2e5, maxS1=50, S2raw_min=450, Ermin=0, mWmp=
     if nSim>=5e5:
         sNR = ip.UnivariateSpline(S1_bin_cen_n, mean_S2oS1_n,s=.0001) #essentially linear interp
     else:
-        sNR = ip.UnivariateSpline(S1_bin_cen_n, mean_S2oS1_n,s=.001) #essentially linear interp
+        sNR = ip.UnivariateSpline(S1_bin_cen_n, mean_S2oS1_n,s=.01) #essentially linear interp
     #Use gaussian fit
     #sNR = ip.UnivariateSpline(S1_bin_cen_n, coeff_n[:,1],s=0.005)
     
