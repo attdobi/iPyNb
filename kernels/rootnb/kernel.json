@@ -1,0 +1,10 @@
+{
+ "argv": ["//anaconda2/bin/python", "-m", "IPython.kernel",
+          "-f", "{connection_file}"],
+ "display_name": "rootnb",
+ "language": "python",
+ "env": {
+    "LD_LIBRARY_PATH": "/anaconda2/lib:/global/project/projectdirs/lux/Tools/root_pdsf/root/lib:/global/project/projectdirs/lux/Tools/anaconda/pkgs/boost-1.57.0-4/lib",
+    "PYTHONPATH": "/global/project/projectdirs/lux/Tools/root_pdsf/root/lib/"
+ }
+}
